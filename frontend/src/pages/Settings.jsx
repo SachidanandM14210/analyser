@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Sliders, Save, CheckCircle, Moon, Sun } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sliders, Save, CheckCircle2, Shield } from 'lucide-react';
 
 export default function Settings() {
-  const [settings, setSettings] = useState({
-    defaultLanguage: 'Python',
-    autoRunOnUpload: false,
-    showRecommendations: true,
-    darkMode: false,
+  const [settings, setSettings] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('analyzer_settings') || '{}');
+    } catch {
+      return {
+        defaultLanguage: 'Python',
+        autoRunOnUpload: false,
+        showRecommendations: true,
+        darkMode: false,
+      };
+    }
   });
 
   const [savedNotification, setSavedNotification] = useState(false);
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('analyzer_settings') || '{}');
-      setSettings(prev => ({ ...prev, ...saved }));
-    } catch (e) {
-      console.error(e);
-    }
-  }, []);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -30,31 +27,36 @@ export default function Settings() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Configure default analysis behaviors, language bindings, and workspace preferences.
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">System Settings</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Configure default analysis behaviors, editor language bindings, and workspace preferences.
         </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Analysis Preferences */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-xs">
-          <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
-            <Sliders className="w-5 h-5 text-primary-600" />
-            <h2 className="text-base font-bold text-slate-900">Analysis Options</h2>
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-xs">
+          <div className="flex items-center space-x-3 pb-4 mb-5 border-b border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Sliders className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Analysis Options</h2>
+              <p className="text-xs text-slate-400">Scanner runtime behavior and default triggers</p>
+            </div>
           </div>
 
           <div className="space-y-5 text-xs">
             {/* Default Language */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <label className="font-semibold text-slate-800 text-sm">Default Language</label>
-                <p className="text-slate-500 text-xs">Pre-selected language when opening the code editor</p>
+                <label className="font-bold text-slate-800 text-sm">Default Language</label>
+                <p className="text-slate-500 text-xs mt-0.5">Pre-selected programming language for new workspace sessions</p>
               </div>
               <select
-                value={settings.defaultLanguage}
+                value={settings.defaultLanguage || 'Python'}
                 onChange={(e) => setSettings({ ...settings, defaultLanguage: e.target.value })}
-                className="bg-slate-50 border border-slate-300 text-slate-800 rounded-lg px-3 py-2 outline-hidden focus:ring-2 focus:ring-primary-500 w-full sm:w-44"
+                className="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-xl px-3.5 py-2 outline-hidden focus:ring-2 focus:ring-blue-500 w-full sm:w-48 cursor-pointer shadow-2xs"
               >
                 <option value="Python">Python</option>
                 <option value="Java">Java</option>
@@ -66,77 +68,77 @@ export default function Settings() {
             {/* Auto Run on Upload */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100">
               <div>
-                <span className="font-semibold text-slate-800 text-sm">Auto-run Analysis on Upload</span>
-                <p className="text-slate-500 text-xs">Automatically trigger scans immediately when a file is selected</p>
+                <span className="font-bold text-slate-800 text-sm">Auto-run Analysis on Upload</span>
+                <p className="text-slate-500 text-xs mt-0.5">Automatically trigger scans immediately when a source file is selected</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={settings.autoRunOnUpload}
+                  checked={!!settings.autoRunOnUpload}
                   onChange={(e) => setSettings({ ...settings, autoRunOnUpload: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
 
             {/* Show Recommendations */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100">
               <div>
-                <span className="font-semibold text-slate-800 text-sm">Show AI Recommendations</span>
-                <p className="text-slate-500 text-xs">Display contextual refactoring and code improvement tips</p>
+                <span className="font-bold text-slate-800 text-sm">Show AI Recommendations</span>
+                <p className="text-slate-500 text-xs mt-0.5">Display contextual refactoring and quality improvement recommendations</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={settings.showRecommendations}
+                  checked={settings.showRecommendations !== false}
                   onChange={(e) => setSettings({ ...settings, showRecommendations: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
           </div>
         </div>
 
-        {/* Appearance Settings */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-6 shadow-xs">
-          <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100">
-            <Sun className="w-5 h-5 text-amber-500" />
-            <h2 className="text-base font-bold text-slate-900">Appearance</h2>
+        {/* Engine Pipeline Info */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-xs">
+          <div className="flex items-center space-x-3 pb-4 mb-4 border-b border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Engine Configuration</h2>
+              <p className="text-xs text-slate-400">Underlying ML models and AST parsing tools</p>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs">
-            <div>
-              <span className="font-semibold text-slate-800 text-sm">Dark Theme Mode</span>
-              <p className="text-slate-500 text-xs">Toggle between dark navy theme and light canvas layout</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block">AST Static Parser</span>
+              <p className="font-bold text-slate-800 mt-1">Radon AST + Bandit Security</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.darkMode}
-                onChange={(e) => setSettings({ ...settings, darkMode: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider block">Inference Engine</span>
+              <p className="font-bold text-slate-800 mt-1">XGBoost & RandomForest Ensemble</p>
+            </div>
           </div>
         </div>
 
-        {/* Save & Feedback */}
+        {/* Save & Feedback Toolbar */}
         <div className="flex items-center justify-between pt-2">
           {savedNotification ? (
-            <div className="flex items-center space-x-1.5 text-xs font-semibold text-emerald-600">
-              <CheckCircle className="w-4 h-4" />
+            <div className="flex items-center space-x-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4" />
               <span>Settings saved successfully!</span>
             </div>
           ) : (
-            <span className="text-xs text-slate-400">Settings are saved locally to your browser profile.</span>
+            <span className="text-xs text-slate-400">Settings are persisted locally to your browser profile.</span>
           )}
 
           <button
             type="submit"
-            className="inline-flex items-center space-x-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/25 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>Save Preferences</span>

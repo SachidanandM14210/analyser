@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Play, Upload, Check, RefreshCw, AlertTriangle, FileCode } from 'lucide-react';
+import React, { useState } from 'react';
+import { Play, Upload, Check, RefreshCw, AlertTriangle, FileCode, Sparkles } from 'lucide-react';
 import CodeEditor from '../components/editor/CodeEditor';
 import RiskCards from '../components/dashboard/RiskCard';
 import MetricsGrid from '../components/dashboard/MetricsGrid';
@@ -8,7 +8,8 @@ import Recommendations from '../components/dashboard/Recommendations';
 import PredictionResult from '../components/dashboard/PredictionResult';
 import { analyzeCode } from '../services/analysisService';
 
-const DEFAULT_SAMPLE_PYTHON = `import os
+const SAMPLE_CODES = {
+  Python: `import os
 
 def read_file(filename):
     with open(filename, "r") as file:
@@ -16,29 +17,107 @@ def read_file(filename):
 
 def process_data(data):
     result = []
-
     for item in data:
         if item > 0:
             result.append(item)
-
     return result
 
 def main():
     filename = input("Enter file name: ")
     data = read_file(filename)
-    processed = process_data(data.split())
+    processed = process_data([int(x) for x in data.split()])
     print("Processed data:", processed)
 
 if __name__ == "__main__":
-    main()`;
+    main()`,
+
+  Java: `import java.util.Scanner;
+import java.util.ArrayList;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter threshold: ");
+        int threshold = scanner.nextInt();
+        
+        ArrayList<Integer> numbers = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            if (i > threshold) {
+                numbers.add(i);
+            }
+        }
+        System.out.println("Result: " + numbers);
+    }
+}`,
+
+  C: `#include <stdio.h>
+#include <stdlib.h>
+
+int process_array(int *arr, int size) {
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        if (arr[i] > 0) {
+            sum += arr[i];
+        }
+    }
+    return sum;
+}
+
+int main() {
+    int data[] = {1, -2, 3, 4, -5, 6};
+    int total = process_array(data, 6);
+    printf("Total sum: %d\\n", total);
+    return 0;
+}`,
+
+  'C++': `#include <iostream>
+#include <vector>
+#include <algorithm>
+
+class DataProcessor {
+public:
+    std::vector<int> filterPositive(const std::vector<int>& input) {
+        std::vector<int> result;
+        for (const auto& val : input) {
+            if (val > 0) {
+                result.push_back(val);
+            }
+        }
+        return result;
+    }
+};
+
+int main() {
+    DataProcessor processor;
+    std::vector<int> values = {10, -5, 20, -1, 30};
+    auto filtered = processor.filterPositive(values);
+    std::cout << "Filtered count: " << filtered.size() << std::endl;
+    return 0;
+}`
+};
 
 export default function Analyze() {
-  const [code, setCode] = useState(DEFAULT_SAMPLE_PYTHON);
+  const [code, setCode] = useState(SAMPLE_CODES.Python);
   const [language, setLanguage] = useState('Python');
   const [filename, setFilename] = useState('main.py');
   const [status, setStatus] = useState('initial'); // 'initial' | 'analyzing' | 'completed'
   const [result, setResult] = useState(null);
   const [isStale, setIsStale] = useState(false);
+
+  const handleLanguageChange = (newLang) => {
+    setLanguage(newLang);
+    const extMap = { Python: 'main.py', Java: 'Main.java', C: 'main.c', 'C++': 'main.cpp' };
+    setFilename(extMap[newLang] || 'main.txt');
+    setCode(SAMPLE_CODES[newLang] || '');
+    setResult(null);
+    setIsStale(false);
+  };
+
+  const handleResetSample = () => {
+    setCode(SAMPLE_CODES[language] || '');
+    setResult(null);
+    setIsStale(false);
+  };
 
   const handleCodeChange = (newCode) => {
     setCode(newCode);
@@ -86,7 +165,6 @@ export default function Analyze() {
       setResult(analysisResult);
       setStatus('completed');
 
-      // Briefly display 'Analysis Complete' then return to 'Run Analysis'
       setTimeout(() => {
         setStatus('initial');
       }, 1800);
@@ -112,7 +190,7 @@ export default function Analyze() {
   const saveToHistory = (entry) => {
     try {
       const existing = JSON.parse(localStorage.getItem('analyzer_history') || '[]');
-      const updated = [entry, ...existing].slice(0, 50); // Keep last 50
+      const updated = [entry, ...existing].slice(0, 50);
       localStorage.setItem('analyzer_history', JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to save history', e);
@@ -122,26 +200,34 @@ export default function Analyze() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* Header section */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Analyze Your Code</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Paste your code below or upload a file to analyze its quality and defect risk.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Analyze Source Code</h1>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <Sparkles className="w-2.5 h-2.5 mr-1 text-indigo-500" />
+              AST & ML Mode
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Edit code directly or upload source files to trigger comprehensive quality scans and defect predictions.
+          </p>
+        </div>
       </div>
 
       {/* Control bar: Language, File Upload, Run Analysis */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Language Selector */}
           <div className="flex items-center space-x-2">
-            <label htmlFor="language-select" className="text-xs font-semibold text-slate-600">
+            <label htmlFor="language-select" className="text-xs font-bold text-slate-600">
               Language:
             </label>
             <select
               id="language-select"
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-medium rounded-lg px-3 py-2 outline-hidden focus:ring-2 focus:ring-primary-500"
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              className="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-xl px-3.5 py-2 outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-2xs"
             >
               <option value="Python">Python</option>
               <option value="Java">Java</option>
@@ -152,9 +238,9 @@ export default function Analyze() {
 
           {/* File Upload Button */}
           <div>
-            <label className="cursor-pointer inline-flex items-center space-x-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-medium rounded-lg transition-colors border border-slate-200">
+            <label className="cursor-pointer inline-flex items-center space-x-2 px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl transition-all border border-slate-300 shadow-2xs">
               <Upload className="w-3.5 h-3.5 text-slate-500" />
-              <span>Upload Source File</span>
+              <span>Upload File</span>
               <input
                 type="file"
                 accept=".py,.java,.c,.cpp,.h,.hpp"
@@ -170,18 +256,18 @@ export default function Analyze() {
           <button
             onClick={() => triggerAnalysis()}
             disabled={status === 'analyzing'}
-            className={`inline-flex items-center space-x-2 px-5 py-2.5 rounded-lg text-xs font-semibold shadow-xs transition-all ${
+            className={`inline-flex items-center space-x-2.5 px-6 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all duration-200 cursor-pointer ${
               status === 'analyzing'
-                ? 'bg-primary-400 text-white cursor-not-allowed'
+                ? 'bg-blue-400 text-white cursor-not-allowed shadow-none'
                 : status === 'completed'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-primary-600 hover:bg-primary-700 text-white cursor-pointer'
+                ? 'bg-emerald-600 text-white shadow-emerald-500/25'
+                : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5'
             }`}
           >
             {status === 'analyzing' ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Analyzing...</span>
+                <span>Running Scan...</span>
               </>
             ) : status === 'completed' ? (
               <>
@@ -200,10 +286,10 @@ export default function Analyze() {
 
       {/* Stale Warning Indicator */}
       {isStale && (
-        <div className="flex items-center space-x-2 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl">
+        <div className="flex items-center space-x-2.5 p-3.5 bg-amber-500/10 border border-amber-300/80 text-amber-900 text-xs rounded-2xl">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
           <span>
-            Code was modified after the last run. The results below represent the previous snapshot until you click <strong>Run Analysis</strong> again.
+            Code was modified after the last run. The results below reflect the prior snapshot until you click <strong>Run Analysis</strong> again.
           </span>
         </div>
       )}
@@ -214,13 +300,20 @@ export default function Analyze() {
         onChange={handleCodeChange}
         language={language}
         filename={filename}
+        onResetSample={handleResetSample}
       />
 
       {/* Results Section */}
       {result ? (
-        <div className="space-y-6 pt-2">
-          <div className="border-t border-slate-200 pt-4">
-            <h2 className="text-base font-bold text-slate-900 tracking-tight mb-4">Analysis Results</h2>
+        <div className="space-y-6 pt-2 animate-in fade-in duration-300">
+          <div className="flex items-center justify-between border-t border-slate-200/80 pt-6">
+            <div>
+              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">Analysis Dashboard</h2>
+              <p className="text-xs text-slate-500">Comprehensive inspection findings for {filename}</p>
+            </div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Scanned Successfully
+            </span>
           </div>
 
           {/* Top 4 Result Cards */}
@@ -242,11 +335,13 @@ export default function Analyze() {
           <PredictionResult prediction={result.prediction} />
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center shadow-xs">
-          <FileCode className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-slate-800">Ready to Analyze</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-            Click the <strong className="text-primary-600">Run Analysis</strong> button above to extract code metrics, detect security and style issues, and predict defect risk.
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-10 text-center shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
+            <FileCode className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-slate-900">Ready to Analyze</h3>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mt-1.5 leading-relaxed">
+            Click the <strong className="text-blue-600 font-bold">Run Analysis</strong> button above to extract code metrics, detect vulnerabilities, and compute ML defect risk.
           </p>
         </div>
       )}

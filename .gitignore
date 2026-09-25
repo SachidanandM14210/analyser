@@ -1,0 +1,16 @@
+# Logs
+*.log
+firebase-debug.log*
+ui-debug.log*
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+
+# Environment / Temp
+.env
+.env.local
+.DS_Store
